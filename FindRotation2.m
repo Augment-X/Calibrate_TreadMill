@@ -3,7 +3,7 @@ clc; clear all; close all;
 
 % Define parmeters
 
-rot = [0; 15.7; 180];       % Rotation as entered into Vicon   
+rot = [0; 10; 180];       % Rotation as entered into Vicon   
 %rot = [0; 15.7; 180];  
 
 MakersFromVicon= ...                 % value from Nexus measurment [Marker1(top left), Marker2(top right), Marker3(bottom left)]

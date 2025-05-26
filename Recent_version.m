@@ -14,17 +14,19 @@ Z = cellfun(@mean, trajZ);
 M1 = [X(1), Y(1), Z(1)];
 M2 = [X(2), Y(2), Z(2)];
 M3 = [X(3), Y(3), Z(3)];
+
 v1 = (M2 - M1) / norm(M2 - M1); % X local
-v_temp = (M3 - M1) / norm(M3 - M1); % direction auxiliaire
-v3 = cross(v_temp, v1); % Z local
-v3 = v3 / norm(v3);
-v2 = cross(v3, v1); % Y local réorthonormé
-v2=v2/norm(v2);
-%v3=-v3;
+v_temp = (M3 - M1) / norm(M3 - M1); % direction auxiliaire                  TT: c'est pas -v2 ça? 
+v3 = cross(v_temp, v1); % Z local                                           TT: et donc ici c'est -v3 ?  a verifier
+%v3 = v3 / norm(v3);                                                     %  TT: ça a peu de sens. V2 et v1 sont unitaire et orthogonal 
+v2 = cross(v3, v1); % Y local réorthonormé                                  TT: hmmm
+v2=v2/norm(v2);                                 %                           TT: hmmm    
+%v3=-v3;                                                                    TT: hmmm
 R = [v1; v2; v3]'; % Matrice de rotation
 % Application d'une rotation de 180° autour de Z si nécessaire
-Rz180 = axang2rotm([0 0 1 pi]);
-R_corrected = R * Rz180;
+Rz180 = axang2rotm([0 0 1 pi]);                         
+R_corrected = R * Rz180;                                                    % Là tu m"enbouche un coin 
+
 % Quaternion corrigé
 quat_corrected = rotm2quat(R_corrected); % [w x y z]
 quat_corrected = quat_corrected/norm(quat_corrected);
