@@ -1,19 +1,51 @@
 clc; clear all; close all; 
 
-
 % Define parmeters
-
-rot = [0; 10; 180];       % Rotation as entered into Vicon   
-%rot = [0; 15.7; 180];  
-
-MakersFromVicon= ...                 % value from Nexus measurment [Marker1(top left), Marker2(top right), Marker3(bottom left)]
-  [202.7236, -197.2386,  197.0820; ...
- -241.9874, -246.9749,  250.4348 ; ...
-   54.2698 ,  51.9645 , -32.2667] ;
+X0 = [0; 0; 0];       % Innitial guess rotation (to be entered into Vicon) 
+X0 = X0 *pi/180;
 
 
-%% DEFINE FORCE PLATE OBKJECT        
-% Object Parameters
+
+%%%%%% INNER Script TESTING %%%%%%%
+
+global MakersFromVicon;
+
+MakersFromVicon = ...                 
+   [ 266.6853, -114.2799 , 114.2799;...
+ -177.1411, -299.0654,  299.0654;...
+   10.0000 ,  10.0000  , 10.0000] ;
+% rot = [0; 0; 60]; 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Value from Nexus measurment [Marker1(top left), Marker2(top right), Marker3(bottom left)]
+
+% vicon = ViconNexus();
+% Markers = vicon.GetMarkerNames('ForcePlate3Points');
+% n = length(Markers);
+% 
+% trajX = cell(1, n); trajY = cell(1, n); trajZ = cell(1, n);
+% for i = 1:n
+%  [trajX{i}, trajY{i}, trajZ{i}, ~] = vicon.GetTrajectory('ForcePlate3Points', Markers{i});
+% end
+% X = cellfun(@mean, trajX);
+% Y = cellfun(@mean, trajY);
+% Z = cellfun(@mean, trajZ);
+% 
+% M1 = [X(1), Y(1), Z(1)]';
+% M2 = [X(2), Y(2), Z(2)]';
+% M3 = [X(3), Y(3), Z(3)]';
+% 
+% Center = (M2+M3)/2;
+% 
+% global MakersFromVicon;
+% MakersFromVicon =[M1-Center,M2-Center,M3-Center];
+
+
+
+
+%% DEFINE FORCE PLATE OBJECT        
 FPLenght = 600; % mm
 FPwidth = 500; % mm
 edgeBand = 50; % Width death zone mm (for marker position) 
@@ -23,6 +55,7 @@ EdgeVec = ...
     [FPwidth/2, -FPwidth/2 , -FPwidth/2,  FPwidth/2, FPwidth/2;...
     FPLenght/2, FPLenght/2, -FPLenght/2, -FPLenght/2,  FPLenght/2;...
     0, 0 , 0 , 0 , 0];
+global MarkersVec
 MarkersVec = ...
     [-FPwidth/2+edgeBand, FPwidth/2-edgeBand , -FPwidth/2+edgeBand;...
     FPLenght/2-edgeBand, FPLenght/2-edgeBand, -FPLenght/2+edgeBand;...
@@ -31,27 +64,33 @@ unitVecX= [0, UnitVecFactor; 0 , 0 ; 0 , 0];
 unitVecY= [0, 0; 0 , UnitVecFactor ; 0 , 0]; 
 unitVecZ= [0, 0; 0 , 0 ; 0 , UnitVecFactor]; 
 
-%% VISUALIZE %%
-figure(); hold on; axis equal; grid on;  
+
+
+%% VISUALIZE %% initial position 
+figure(); hold on; axis equal; grid on;  xlim([-1000, 1000]); ylim([-1000, 1000])
 
 plot3(EdgeVec(1,:), EdgeVec(2,:), EdgeVec(3,:),':k')
 plot3(MarkersVec(1,:), MarkersVec(2,:), MarkersVec(3,:),'*k')
 plot3(unitVecX(1,:), unitVecX(2,:), unitVecX(3,:),':r')
 plot3(unitVecY(1,:), unitVecY(2,:), unitVecY(3,:),':g')
 plot3(unitVecZ(1,:), unitVecZ(2,:), unitVecZ(3,:),':b')
+plot3(MakersFromVicon(1,:), MakersFromVicon(2,:), MakersFromVicon(3,:),'ok')
 
-%% ROTATION 
-% rotation matrix 
 
-steps = 40; 
-rot = rot*pi()/180/steps;
-ROT = eye(3);
-for i = 1 : steps
-    rotX = [ 1, 0, 0; 0, cos(rot(1)), -sin(rot(1)); 0, sin(rot(1)), cos(rot(1))]; 
-    rotY = [cos(rot(2)),0 ,sin(rot(2)); 0, 1, 0 ; -sin(rot(2)), 0, cos(rot(2))]; 
-    rotZ = [cos(rot(3)), -sin(rot(3)),0 ; sin(rot(3)), cos(rot(3)), 0 ; 0, 0, 1 ]; 
-    ROT = rotZ*rotY*rotX*ROT;
-end
+%% OPTIMIZATION
+
+Xub = [pi; pi; pi]; Xlb = -Xub; % Upper and lower bounds
+OPTIONS = optimoptions('fmincon','Algorithm','SQP');  % alternatives : interior point, SQP,  active-set, and trust-region-reflective
+
+Xopt = fmincon(@objective, X0, [], [], [], [], Xlb, Xub, [], OPTIONS );
+
+% FINAL ANSWER %%
+Xfinal= Xopt*180/pi
+
+
+%% Rotate object 
+
+ROT = rotationMatrix(Xopt);
 
 % Transform Object 
 EdgeVec = ROT*EdgeVec;
@@ -60,7 +99,8 @@ unitVecX = ROT*unitVecX;
 unitVecY= ROT*unitVecY;
 unitVecZ = ROT*unitVecZ;
 
-%% VISUALIZE %%
+
+%% VISUALIZE %% final position
 %figure(); hold on; axis equal; grid on;  
 
 plot3(EdgeVec(1,:), EdgeVec(2,:), EdgeVec(3,:),'-k')
@@ -68,6 +108,35 @@ plot3(MarkersVec(1,:), MarkersVec(2,:), MarkersVec(3,:),'*k')
 plot3(unitVecX(1,:), unitVecX(2,:), unitVecX(3,:),'-r')
 plot3(unitVecY(1,:), unitVecY(2,:), unitVecY(3,:),'-g')
 plot3(unitVecZ(1,:), unitVecZ(2,:), unitVecZ(3,:),'-b')
-plot3(MakersFromVicon(1,:), MakersFromVicon(2,:), MakersFromVicon(3,:),'ok')
+
+
+%% OPTIMIZATION 
+
+function [obj] = objective(X)
+    
+    ROT = rotationMatrix(X);
+    
+    global MarkersVec 
+    global MakersFromVicon
+    
+    MarkersVec0 = ROT*MarkersVec;
+    
+    obj = sum(sum((MarkersVec0-MakersFromVicon).^2));
+
+end
+
+
+function [ROT] = rotationMatrix(X)
+    steps = 40; 
+    X = X/steps;
+    ROT = eye(3);
+    for i = 1 : steps
+        rotX = [ 1, 0, 0; 0, cos(X(1)), -sin(X(1)); 0, sin(X(1)), cos(X(1))]; 
+        rotY = [cos(X(2)),0 ,sin(X(2)); 0, 1, 0 ; -sin(X(2)), 0, cos(X(2))]; 
+        rotZ = [cos(X(3)), -sin(X(3)),0 ; sin(X(3)), cos(X(3)), 0 ; 0, 0, 1 ]; 
+        ROT = rotZ*rotY*rotX*ROT;
+    end
+    size(ROT)
+end
 
 
