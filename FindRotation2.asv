@@ -2,7 +2,7 @@ clc; clear; close;
 
 % Define parmeters
 X0 = [0; 0; 0];       % Innitial guess rotation (to be entered into Vicon) 
-%X0 = X0 *pi/180;
+X0 = X0 *pi/180;
 
 
 
@@ -77,16 +77,6 @@ plot3(unitVecZ(1,:), unitVecZ(2,:), unitVecZ(3,:),':b')
 plot3(MakersFromVicon(1,:), MakersFromVicon(2,:), MakersFromVicon(3,:),'ok')
 
 
-%% OPTIMIZATION
-
-Xub = [180; 180; 180]; Xlb = -Xub; % Upper and lower bounds
-OPTIONS = optimoptions('fmincon','Algorithm','SQP');  % alternatives : interior point, SQP,  active-set, and trust-region-reflective
-
-Xopt = fmincon(@objective, X0, [], [], [], [], Xlb, Xub, [], OPTIONS );
-
-% FINAL ANSWER %%
-%Xfinal= Xopt*pi/180;
-disp(Xopt);
 
 %% Rotate object 
 
@@ -98,6 +88,16 @@ MarkersVec = ROT*MarkersVec;
 unitVecX = ROT*unitVecX;
 unitVecY= ROT*unitVecY;
 unitVecZ = ROT*unitVecZ;
+
+%% OPTIMIZATION
+
+Xub = [pi; pi; pi]; Xlb = -Xub; % Upper and lower bounds
+OPTIONS = optimoptions(@fmincon,'Algorithm','SQP');  % alternatives : interior point, SQP,  active-set, and trust-region-reflective
+
+Xopt = fmincon(@objective, X0, [], [], [], [], Xlb, Xub, [], OPTIONS );
+
+% FINAL ANSWER %%
+Xfinal= Xopt*180/pi;
 
 
 %% VISUALIZE %% final position
@@ -112,16 +112,16 @@ plot3(unitVecZ(1,:), unitVecZ(2,:), unitVecZ(3,:),'-b')
 
 %% OPTIMIZATION 
 
-function obj = objective(X1)
+function obj = objective(X)
     
-    ROT1 = rotationMatrix(X1);
+    ROT1 = rotationMatrix(X);
     
     global MarkersVec 
     global MakersFromVicon
     
     MarkersVec0 = ROT1*MarkersVec;
     
-    obj = sum(sum((MarkersVec0-MakersFromVicon).^2));
+    obj = sum(vecnorm((MarkersVec0-MakersFromVicon).^2));
 
 end
 
