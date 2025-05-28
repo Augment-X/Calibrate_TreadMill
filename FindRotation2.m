@@ -1,7 +1,7 @@
 clc; clear; close; 
 
 % Define parmeters
-X0 = [0; 0; 0];       % Innitial guess rotation (to be entered into Vicon) 
+X0 = [0; 0; 90];       % Innitial guess rotation (to be entered into Vicon) 
 %X0 = X0 *pi/180;
 
 
@@ -10,10 +10,15 @@ X0 = [0; 0; 0];       % Innitial guess rotation (to be entered into Vicon)
 
 global MakersFromVicon;
 
-MakersFromVicon = ...                 
-   [ 266.6853, -114.2799 , 114.2799;...
- -177.1411, -299.0654,  299.0654;...
-   10.0000 ,  10.0000  , 10.0000] ;
+MakersFromVicon= ...
+  [-234.3254, -249.6393,  253.8878; ...
+ -190.0241, 199.7790,  -195.2969 ; ...
+   107.6214 ,  19.1969 , -0.1742] ;
+
+% MakersFromVicon = ...                 
+%    [ 266.6853, -114.2799 , 114.2799;...
+%  -177.1411, -299.0654,  299.0654;...
+%    10.0000 ,  10.0000  , 10.0000] ;
 % rot = [0; 0; 60]; 
 
 
@@ -136,7 +141,7 @@ function ROT2 = rotationMatrix(X)
         rotZ = [cos(X(3)), -sin(X(3)),0 ; sin(X(3)), cos(X(3)), 0 ; 0, 0, 1 ]; 
         ROT2 = rotZ*rotY*rotX*ROT2;
     end
-    size(ROT2)
+    %size(ROT2)
 end
 
 
