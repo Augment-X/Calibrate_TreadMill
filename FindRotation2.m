@@ -1,54 +1,56 @@
 clc; clear; close; 
 
 % Define parmeters
-X0 = [0; 0; 90];       % Innitial guess rotation (to be entered into Vicon) 
+X0 = [0; 0; 0];       % Innitial guess rotation (to be entered into Vicon) 
 %X0 = X0 *pi/180;
 
-
+%%
 
 %%%%%% INNER Script TESTING %%%%%%%
 
 global MakersFromVicon;
 
-MakersFromVicon= ...
-  [-234.3254, -249.6393,  253.8878; ...
- -190.0241, 199.7790,  -195.2969 ; ...
-   107.6214 ,  19.1969 , -0.1742] ;
-
-% MakersFromVicon = ...                 
-%    [ 266.6853, -114.2799 , 114.2799;...
-%  -177.1411, -299.0654,  299.0654;...
-%    10.0000 ,  10.0000  , 10.0000] ;
-% rot = [0; 0; 60]; 
-
+% % MakersFromVicon= ...
+% %   [-234.3254, -249.6393,  253.8878; ...
+% %  -190.0241, 199.7790,  -195.2969 ; ...
+% %    107.6214 ,  19.1969 , -0.1742] ;
+% 
+% % MakersFromVicon = ...                 
+% %    [ 266.6853, -114.2799 , 114.2799;...
+% %  -141, -299.0654,  299.0654;...
+% %    10.0000 ,  10.0000  , 10.0000] ;
+% % rot = [0; 0; 60]; 
+%
+  MakersFromVicon= ...
+[ -229.6853, -259.2799 , 262.2799;...
+ -41.1411, -116.0654,  -97.0654;...
+   219.0000 ,  -146.0000  , 154.0000] ;
+rot = [0; 10; 90]; 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Value from Nexus measurment [Marker1(top left), Marker2(top right), Marker3(bottom left)]
 
-% vicon = ViconNexus();
-% Markers = vicon.GetMarkerNames('ForcePlate3Points');
-% n = length(Markers);
-% 
-% trajX = cell(1, n); trajY = cell(1, n); trajZ = cell(1, n);
-% for i = 1:n
-%  [trajX{i}, trajY{i}, trajZ{i}, ~] = vicon.GetTrajectory('ForcePlate3Points', Markers{i});
-% end
-% X = cellfun(@mean, trajX);
-% Y = cellfun(@mean, trajY);
-% Z = cellfun(@mean, trajZ);
-% 
-% M1 = [X(1), Y(1), Z(1)]';
-% M2 = [X(2), Y(2), Z(2)]';
-% M3 = [X(3), Y(3), Z(3)]';
-% 
-% Center = (M2+M3)/2;
-% 
-% global MakersFromVicon;
-% MakersFromVicon =[M1-Center,M2-Center,M3-Center];
+vicon = ViconNexus();
+Markers = vicon.GetMarkerNames('ForcePlate3Points');
+n = length(Markers);
 
+trajX = cell(1, n); trajY = cell(1, n); trajZ = cell(1, n);
+for i = 1:n
+ [trajX{i}, trajY{i}, trajZ{i}, ~] = vicon.GetTrajectory('ForcePlate3Points', Markers{i});
+end
+X = cellfun(@mean, trajX);
+Y = cellfun(@mean, trajY);
+Z = cellfun(@mean, trajZ);
 
+M1 = [X(1); Y(1); Z(1)];
+M2 = [X(2); Y(2); Z(2)];
+M3 = [X(3); Y(3); Z(3)];
 
+Center = (M2+M3)/2;
+
+%global MakersFromVicon;
+%MakersFromVicon =[M1-Center,M2-Center,M3-Center];
 
 %% DEFINE FORCE PLATE OBJECT        
 FPLenght = 600; % mm
@@ -56,15 +58,29 @@ FPwidth = 500; % mm
 edgeBand = 50; % Width death zone mm (for marker position) 
 UnitVecFactor = 100; % Scaling Factor (mm) of unitary Frame of Reference
 MarkerHeight = 10; % Marker height base to centroid 
+theta=pi;
+ROT_init=[cos(theta) -sin(theta) 0;...
+          sin(theta) cos(theta) 0;...
+          0 0 1];
+
+MarkersVec_1=[
+    -FPwidth/2+edgeBand, FPwidth/2-edgeBand, -FPwidth/2+edgeBand;...
+    FPLenght/2-edgeBand, FPLenght/2-edgeBand, -FPLenght/2+edgeBand;...
+    MarkerHeight, MarkerHeight, MarkerHeight];
+
+global MarkersVec
+MarkersVec = ROT_init*MarkersVec_1;
 EdgeVec = ...
     [FPwidth/2, -FPwidth/2 , -FPwidth/2,  FPwidth/2, FPwidth/2;...
     FPLenght/2, FPLenght/2, -FPLenght/2, -FPLenght/2,  FPLenght/2;...
     0, 0 , 0 , 0 , 0];
-global MarkersVec
-MarkersVec = ...
-    [-FPwidth/2+edgeBand, FPwidth/2-edgeBand , -FPwidth/2+edgeBand;...
-    FPLenght/2-edgeBand, FPLenght/2-edgeBand, -FPLenght/2+edgeBand;...
-    MarkerHeight, MarkerHeight , MarkerHeight];
+
+% global MarkersVec
+% MarkersVec = ...
+%     [-FPwidth/2+edgeBand, FPwidth/2-edgeBand , -FPwidth/2+edgeBand;...
+%     FPLenght/2-edgeBand, FPLenght/2-edgeBand, -FPLenght/2+edgeBand;...
+%     MarkerHeight, MarkerHeight , MarkerHeight];
+
 unitVecX= [0, UnitVecFactor; 0 , 0 ; 0 , 0]; 
 unitVecY= [0, 0; 0 , UnitVecFactor ; 0 , 0]; 
 unitVecZ= [0, 0; 0 , 0 ; 0 , UnitVecFactor]; 
@@ -90,7 +106,6 @@ OPTIONS = optimoptions('fmincon','Algorithm','SQP');  % alternatives : interior 
 Xopt = fmincon(@objective, X0, [], [], [], [], Xlb, Xub, [], OPTIONS );
 
 % FINAL ANSWER %%
-%Xfinal= Xopt*pi/180;
 disp(Xopt);
 
 %% Rotate object 
@@ -132,16 +147,16 @@ end
 
 
 function ROT2 = rotationMatrix(X)
-    steps = 40; 
-    X = X/steps;
+
+    X2=deg2rad(X);
+    steps = 1; 
+    X2 = X2/steps;
     ROT2 = eye(3);
     for i = 1 : steps
-        rotX = [ 1, 0, 0; 0, cos(X(1)), -sin(X(1)); 0, sin(X(1)), cos(X(1))]; 
-        rotY = [cos(X(2)),0 ,sin(X(2)); 0, 1, 0 ; -sin(X(2)), 0, cos(X(2))]; 
-        rotZ = [cos(X(3)), -sin(X(3)),0 ; sin(X(3)), cos(X(3)), 0 ; 0, 0, 1 ]; 
+        rotX = [ 1, 0, 0; 0, cos(X2(1)), -sin(X2(1)); 0, sin(X2(1)), cos(X2(1))]; 
+        rotY = [cos(X2(2)),0 ,sin(X2(2)); 0, 1, 0 ; -sin(X2(2)), 0, cos(X2(2))]; 
+        rotZ = [cos(X2(3)), -sin(X2(3)),0 ; sin(X2(3)), cos(X2(3)), 0 ; 0, 0, 1 ]; 
         ROT2 = rotZ*rotY*rotX*ROT2;
     end
     %size(ROT2)
 end
-
-
