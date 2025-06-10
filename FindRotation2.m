@@ -3,7 +3,7 @@ clc; clear; close;
 % Define parmeters
 X0 = [0; 0; 90];       % Innitial guess rotation (to be entered into Vicon) 
 %X0 = X0 *pi/180;
-
+ 
 
 
 %%%%%% INNER Script TESTING %%%%%%%
