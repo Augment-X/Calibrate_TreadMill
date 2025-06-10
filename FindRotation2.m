@@ -5,7 +5,7 @@ FPLenght = 600; % mm
 FPwidth = 500; % mm
 edgeBand = 40; % Width death zone mm (for marker position) 
 UnitVecFactor = 100; % Scaling Factor (mm) of unitary Frame of Reference
-MarkerHeight = 0; % Marker height base to centroid 
+MarkerHeight = 10; % Marker height base to centroid 
 
 global MarkersVec EdgeVec unitVecX unitVecY unitVecZ MakersFromViconRotCalc ;
 
@@ -64,7 +64,7 @@ unitVecZ= [0, 0; 0 , 0 ; 0 , UnitVecFactor];
 % We create fake measurement data to simulate the Vicon output to help develop the algorithm. 
 % Uncomment the following lines to use the hardcoded values for testing
 
-testRot = [-80; 15; -85]; 
+testRot = [0; 40; 160]; 
 testRot = testRot*pi/180; % Rotation to be applied to markers from vicon (in radians)
 testROT = rotationMatrix(testRot); % build test rotation matrix
 MakersFromViconRotCalc = testROT * MarkersVec; % apply rotation to markers

@@ -5,19 +5,30 @@ FPLenght = 600; % mm
 FPwidth = 500; % mm
 edgeBand = 40; % Width death zone mm (for marker position) 
 UnitVecFactor = 100; % Scaling Factor (mm) of unitary Frame of Reference
-MarkerHeight = 0; % Marker height base to centroid 
+MarkerHeight = 10; % Marker height base to centroid 
 
 global MarkersVec EdgeVec unitVecX unitVecY unitVecZ MakersFromViconRotCalc ;
 
+ % MarkersVec = ...
+ %     [-FPwidth/2+edgeBand, FPwidth/2-edgeBand , -FPwidth/2+edgeBand;...
+ %     FPLenght/2-edgeBand, FPLenght/2-edgeBand, -FPLenght/2+edgeBand;...
+ %     MarkerHeight, MarkerHeight , MarkerHeight];
+
+theta=pi;
+ROT_init=[cos(theta) -sin(theta) 0;...
+          sin(theta) cos(theta) 0;...
+          0 0 1];
+
+MarkersVec_1=[
+    -FPwidth/2+edgeBand, FPwidth/2-edgeBand, -FPwidth/2+edgeBand;...
+    FPLenght/2-edgeBand, FPLenght/2-edgeBand, -FPLenght/2+edgeBand;...
+    MarkerHeight, MarkerHeight, MarkerHeight];
+
+MarkersVec = ROT_init*MarkersVec_1;
 EdgeVec = ...
     [FPwidth/2, -FPwidth/2 , -FPwidth/2,  FPwidth/2, FPwidth/2;...
     FPLenght/2, FPLenght/2, -FPLenght/2, -FPLenght/2,  FPLenght/2;...
     0, 0 , 0 , 0 , 0];
-
- MarkersVec = ...
-     [-FPwidth/2+edgeBand, FPwidth/2-edgeBand , -FPwidth/2+edgeBand;...
-     FPLenght/2-edgeBand, FPLenght/2-edgeBand, -FPLenght/2+edgeBand;...
-     MarkerHeight, MarkerHeight , MarkerHeight];
 
 unitVecX= [0, UnitVecFactor; 0 , 0 ; 0 , 0]; 
 unitVecY= [0, 0; 0 , UnitVecFactor ; 0 , 0]; 
@@ -28,35 +39,35 @@ unitVecZ= [0, 0; 0 , 0 ; 0 , UnitVecFactor];
 %%%%%% Useing the algorithm with Vicon Workspace %%%%%%%
 % Value from Nexus measurment [Marker1(top left), Marker2(top right), Marker3(bottom left)]
 % Connect to Vicon Nexus
-vicon = ViconNexus();
-Markers = vicon.GetMarkerNames('ForcePlate3Points');
-n = length(Markers);
-
-trajX = cell(1, n); trajY = cell(1, n); trajZ = cell(1, n);
-for i = 1:n
- [trajX{i}, trajY{i}, trajZ{i}, ~] = vicon.GetTrajectory('ForcePlate3Points', Markers{i});
-end
-X = cellfun(@mean, trajX);
-Y = cellfun(@mean, trajY);
-Z = cellfun(@mean, trajZ);
-
-M1 = [X(1); Y(1); Z(1)];
-M2 = [X(2); Y(2); Z(2)];
-M3 = [X(3); Y(3); Z(3)];
-
-Center = (M2+M3)/2;
-disp('position of Force Plate Center:');
-disp(Center);
-MakersFromViconRotCalc =[M1-Center,M2-Center,M3-Center];
+% vicon = ViconNexus();
+% Markers = vicon.GetMarkerNames('ForcePlate3Points');
+% n = length(Markers);
+% 
+% trajX = cell(1, n); trajY = cell(1, n); trajZ = cell(1, n);
+% for i = 1:n
+%  [trajX{i}, trajY{i}, trajZ{i}, ~] = vicon.GetTrajectory('ForcePlate3Points', Markers{i});
+% end
+% X = cellfun(@mean, trajX);
+% Y = cellfun(@mean, trajY);
+% Z = cellfun(@mean, trajZ);
+% 
+% M1 = [X(1); Y(1); Z(1)];
+% M2 = [X(2); Y(2); Z(2)];
+% M3 = [X(3); Y(3); Z(3)];
+% 
+% Center = (M2+M3)/2;
+% disp('position of Force Plate Center:');
+% disp(Center);
+% MakersFromViconRotCalc =[M1-Center,M2-Center,M3-Center];
 
 %%%%%% INNER Script TESTING %%%%%%%
 % We create fake measurement data to simulate the Vicon output to help develop the algorithm. 
 % Uncomment the following lines to use the hardcoded values for testing
 
-% testRot = [-80; 15; -85]; 
-% testRot = testRot*pi/180; % Rotation to be applied to markers from vicon (in radians)
-% testROT = rotationMatrix(testRot); % build test rotation matrix
-% MakersFromViconRotCalc = testROT * MarkersVec; % apply rotation to markers
+testRot = [-50; 0; 13]; 
+testRot = testRot*pi/180; % Rotation to be applied to markers from vicon (in radians)
+testROT = rotationMatrix(testRot); % build test rotation matrix
+MakersFromViconRotCalc = testROT * MarkersVec; % apply rotation to markers
 
 %% VISUALIZE %% initial position
 figure(1); hold on; axis equal; grid on;  xlim([-1000, 1000]); ylim([-1000, 1000])
