@@ -9,15 +9,21 @@ MarkerHeight = 0; % Marker height base to centroid
 
 global MarkersVec EdgeVec unitVecX unitVecY unitVecZ MakersFromViconRotCalc ;
 
+theta=pi;
+ROT_init=[cos(theta) -sin(theta) 0;...
+          sin(theta) cos(theta) 0;...
+          0 0 1];
+
+MarkersVec_1=[
+    -FPwidth/2+edgeBand, FPwidth/2-edgeBand, -FPwidth/2+edgeBand;...
+    FPLenght/2-edgeBand, FPLenght/2-edgeBand, -FPLenght/2+edgeBand;...
+    MarkerHeight, MarkerHeight, MarkerHeight];
+
+MarkersVec = ROT_init*MarkersVec_1;
 EdgeVec = ...
     [FPwidth/2, -FPwidth/2 , -FPwidth/2,  FPwidth/2, FPwidth/2;...
     FPLenght/2, FPLenght/2, -FPLenght/2, -FPLenght/2,  FPLenght/2;...
     0, 0 , 0 , 0 , 0];
-
- MarkersVec = ...
-     [-FPwidth/2+edgeBand, FPwidth/2-edgeBand , -FPwidth/2+edgeBand;...
-     FPLenght/2-edgeBand, FPLenght/2-edgeBand, -FPLenght/2+edgeBand;...
-     MarkerHeight, MarkerHeight , MarkerHeight];
 
 unitVecX= [0, UnitVecFactor; 0 , 0 ; 0 , 0]; 
 unitVecY= [0, 0; 0 , UnitVecFactor ; 0 , 0]; 
@@ -46,18 +52,7 @@ M3 = [X(3); Y(3); Z(3)];
 
 Center = (M2+M3)/2;
 disp('position of Force Plate Center:');
-disp(Center);
 MakersFromViconRotCalc =[M1-Center,M2-Center,M3-Center];
-
-%%%%%% INNER Script TESTING %%%%%%%
-% We create fake measurement data to simulate the Vicon output to help develop the algorithm. 
-% Uncomment the following lines to use the hardcoded values for testing
-
-% testRot = [-80; 15; -85]; 
-% testRot = testRot*pi/180; % Rotation to be applied to markers from vicon (in radians)
-% testROT = rotationMatrix(testRot); % build test rotation matrix
-% MakersFromViconRotCalc = testROT * MarkersVec; % apply rotation to markers
-
 %% VISUALIZE %% initial position
 figure(1); hold on; axis equal; grid on;  xlim([-1000, 1000]); ylim([-1000, 1000])
 
@@ -67,10 +62,7 @@ plot3(unitVecX(1,:), unitVecX(2,:), unitVecX(3,:),':r')
 plot3(unitVecY(1,:), unitVecY(2,:), unitVecY(3,:),':g')
 plot3(unitVecZ(1,:), unitVecZ(2,:), unitVecZ(3,:),':b')
 plot3(MakersFromViconRotCalc(1,:), MakersFromViconRotCalc(2,:), MakersFromViconRotCalc (3,:),'ok')
-
-
 %% OPTIMIZATION
-
 global err 
 err = [200];
 Xub = [pi; pi; pi]; Xlb = -Xub; % Upper and lower bounds
@@ -82,15 +74,8 @@ while err(end) >=10
     X0 = randn(3,1)*pi; % New seed for next iteration
 end
 
-
-% Output to terminal
-disp(Xopt*180/pi); % FINAL ANSWER (to be entered into Vicon) 
-%disp('instead of :');
-%disp(testRot*180/pi); % TEST ROTATION (to be compared with Vicon)
-
-
+Xopt_f=Xopt*180/pi;
 %% Rotate object after optimization
-
 ROT = rotationMatrix(Xopt);
 % Transform Object 
 EdgeVec = ROT*EdgeVec;
@@ -98,8 +83,6 @@ MarkersVecFinal = ROT*MarkersVec;
 unitVecX = ROT*unitVecX;
 unitVecY= ROT*unitVecY;
 unitVecZ = ROT*unitVecZ;
-
-
 %% VISUALIZE %% final position
 figure(1); %hold on; axis equal; grid on;  
 
@@ -111,6 +94,23 @@ plot3(unitVecZ(1,:), unitVecZ(2,:), unitVecZ(3,:),'-b')
 
 figure(2); hold on; grid on;  
 plot(err); ylabel('Objective Function Value (mm)');
+%% Ecriture dans fichier txt
+
+d12 = norm([X(2)-X(1), Y(2)-Y(1), Z(2)-Z(1)]);
+d13 = norm([X(3)-X(1), Y(3)-Y(1), Z(3)-Z(1)]);
+dim_x = d12 + 2*38.25;
+dim_y = d13 + 2*38.25;
+
+filename = 'FP_parameters.txt';
+fid = fopen(filename, 'w');
+fprintf(fid, 'FP Parameters\n-----------------------------\n');
+fprintf(fid, 'Force plate dimensions (in mm):\n');
+fprintf(fid, '-Length X: %.2f mm\n-Width Y: %.2f mm\n\n', dim_x, dim_y);
+fprintf(fid, 'Center position (in mm):\n');
+fprintf(fid, '-X: %.2f mm\n-Y: %.2f mm\n-Z: %.2f mm\n\n', Center(1), Center(2), Center(3));
+fprintf(fid, 'Orientation (in degrees):\n');
+fprintf(fid, '-Angle X: %.2f°\n-Angle Y: %.2f°\n-Angle Z: %.2f°\n\n', Xopt_f(1), Xopt_f(2), Xopt_f(3));
+fclose(fid);
 
 %% OPTIMIZATION
 
@@ -126,7 +126,7 @@ end
 
 function ROT2 = rotationMatrix(X2)
    % X2=deg2rad(X);
-    steps = 1;             % X2 is divided into steps to approximate the rotation X2 is in Radians
+    steps = 100;             % X2 is divided into steps to approximate the rotation X2 is in Radians
     X2 = X2/steps;
     ROT2 = eye(3);
     for i = 1 : steps
