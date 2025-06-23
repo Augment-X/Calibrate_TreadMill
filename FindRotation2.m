@@ -46,7 +46,6 @@ X = cellfun(@mean, trajX);
 Y = cellfun(@mean, trajY);
 Z = cellfun(@mean, trajZ);
 
-<<<<<<< HEAD
 testRot = [0; 40; 160]; 
 testRot = testRot*pi/180; % Rotation to be applied to markers from vicon (in radians)
 testROT = rotationMatrix(testRot); % build test rotation matrix
@@ -55,7 +54,6 @@ MakersFromViconRotCalc = testROT * MarkersVec; % apply rotation to markers
 M1 = [X(1); Y(1); Z(1)];
 M2 = [X(2); Y(2); Z(2)];
 M3 = [X(3); Y(3); Z(3)];
->>>>>>> c8f64b826881f8c677bc189272e04992155d0340
 
 Center = (M2+M3)/2;
 MakersFromViconRotCalc =[M1-Center,M2-Center,M3-Center];
