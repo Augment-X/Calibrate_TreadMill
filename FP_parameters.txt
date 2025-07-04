@@ -1,0 +1,16 @@
+FP Parameters
+-----------------------------
+Force plate dimensions (in mm):
+-Length X: 498.87 mm
+-Width Y: 600.34 mm
+
+Center position (in mm):
+-X: 1045.93 mm
+-Y: -251.07 mm
+-Z: 173.60 mm
+
+Orientation (in degrees):
+-Angle X: 0.58°
+-Angle Y: 47.10°
+-Angle Z: 173.55°
+

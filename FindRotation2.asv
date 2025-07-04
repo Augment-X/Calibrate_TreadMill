@@ -56,6 +56,7 @@ M2 = [X(2); Y(2); Z(2)];
 M3 = [X(3); Y(3); Z(3)];
 
 Center = (M2+M3)/2;
+Markers_base = 9;
 MakersFromViconRotCalc =[M1-Center,M2-Center,M3-Center];
 %% VISUALIZE %% initial position
 figure(1); hold on; axis equal; grid on;  xlim([-1000, 1000]); ylim([-1000, 1000])
@@ -103,9 +104,6 @@ d12 = norm([X(2)-X(1), Y(2)-Y(1), Z(2)-Z(1)]);
 d13 = norm([X(3)-X(1), Y(3)-Y(1), Z(3)-Z(1)]);
 dim_x = d12 + 2*38.25;
 dim_y = d13 + 2*38.25;
-
-Markers_base = 9;
-Center(3) = Center(3)-Markers_base;
 
 filename = 'FP_parameters.txt';
 fid = fopen(filename, 'w');
