@@ -46,6 +46,11 @@ X = cellfun(@mean, trajX);
 Y = cellfun(@mean, trajY);
 Z = cellfun(@mean, trajZ);
 
+testRot = [0; 40; 160]; 
+testRot = testRot*pi/180; % Rotation to be applied to markers from vicon (in radians)
+testROT = rotationMatrix(testRot); % build test rotation matrix
+MakersFromViconRotCalc = testROT * MarkersVec; % apply rotation to markers
+
 M1 = [X(1); Y(1); Z(1)];
 M2 = [X(2); Y(2); Z(2)];
 M3 = [X(3); Y(3); Z(3)];
@@ -98,6 +103,9 @@ d12 = norm([X(2)-X(1), Y(2)-Y(1), Z(2)-Z(1)]);
 d13 = norm([X(3)-X(1), Y(3)-Y(1), Z(3)-Z(1)]);
 dim_x = d12 + 2*38.25;
 dim_y = d13 + 2*38.25;
+
+Markers_base = 9;
+Center(3) = Center(3)-Markers_base;
 
 filename = 'FP_parameters.txt';
 fid = fopen(filename, 'w');
